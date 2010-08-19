@@ -1,0 +1,6 @@
+Revision history for Perl extension POSIX::AtFork.
+
+0.01  Thu Aug 19 15:15:03 2010
+	- original version; created by h2xs 1.23 with options
+		-An POSIX::AtFork
+
