@@ -1,7 +1,11 @@
 Revision history for Perl extension POSIX::AtFork.
 
+0.01_04
+    - Fix up $$ before 'child' callbacks are callled (reported by kazeburo)
+    - Specify libpthread for non-threaded perls (reported by tokuhirom)
+
 0.01_03
-    - Add Test::SharedFork to test_requires
+    - Add Test::SharedFork to test_requires (reported by lestrrat)
 
 0.01_02
     - Use pthread_atfork() directly with #include <pthread.h>

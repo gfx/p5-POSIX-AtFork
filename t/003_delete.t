@@ -37,7 +37,7 @@ POSIX::AtFork->add_to_child(\&child2);
 POSIX::AtFork->delete_from_child(\&child2);
 
 
-my $pid = Test::SharedFork->fork;
+my $pid = fork;
 die "Failed to fork: $!" if not defined $pid;
 
 if($pid != 0) {

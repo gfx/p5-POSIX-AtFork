@@ -13,7 +13,7 @@ POSIX::AtFork->add_to_prepare(sub{ $prepare++ }) for 1 .. 2;
 POSIX::AtFork->add_to_parent( sub{ $parent++ })  for 1 .. 2;
 POSIX::AtFork->add_to_child(  sub{ $child++ })   for 1 .. 2;
 
-my $pid = Test::SharedFork->fork;
+my $pid = fork;
 die "Failed to fork: $!" if not defined $pid;
 
 if($pid != 0) {

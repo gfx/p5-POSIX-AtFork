@@ -15,7 +15,7 @@ pthread_atfork(
     sub { $child++ },
 );
 
-my $pid = Test::SharedFork->fork;
+my $pid = fork;
 die "Failed to fork: $!" if not defined $pid;
 
 if($pid != 0) {
