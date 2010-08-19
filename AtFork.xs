@@ -67,6 +67,30 @@ paf_register_cb(pTHX_ AV* const list, SV* const cb) {
 }
 
 static void
+paf_delete(pTHX_ AV* const av, SV* const cb) {
+    I32 len = av_len(av) + 1;
+    I32 i;
+
+    if(!(SvROK(cb) && SvTYPE(SvRV(cb)) == SVt_PVCV)) {
+        croak("Not a CODE reference to delete callbacks");
+    }
+
+    for(i = 0; i < len; i++) {
+        SV* const sv = *av_fetch(av, i, TRUE);
+        if(!SvROK(sv)){ sv_dump(sv); }
+        assert(SvROK(sv));
+
+        if(SvRV(sv) == SvRV(cb)) {
+            size_t const tail = len - i - 1;
+            Move(AvARRAY(av) + i + 1, AvARRAY(av) + i, tail, SV*);
+            AvFILLp(av)--;
+            len--;
+            SvREFCNT_dec(sv);
+        }
+    }
+}
+
+static void
 paf_initialize(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
     PTHREAD_ATFORK(paf_prepare, paf_parent, paf_child);
 
@@ -134,3 +158,28 @@ CODE:
    dMY_CXT;
    paf_register_cb(aTHX_ MY_CXT.child_list, cb);
 }
+
+void
+delete_from_prepare(klass, SV* cb)
+CODE:
+{
+    dMY_CXT;
+    paf_delete(aTHX_ MY_CXT.prepare_list, cb);
+}
+
+void
+delete_from_parent(klass, SV* cb)
+CODE:
+{
+    dMY_CXT;
+    paf_delete(aTHX_ MY_CXT.parent_list, cb);
+}
+
+void
+delete_from_child(klass, SV* cb)
+CODE:
+{
+    dMY_CXT;
+    paf_delete(aTHX_ MY_CXT.child_list, cb);
+}
+

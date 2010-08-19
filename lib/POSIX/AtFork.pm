@@ -34,6 +34,11 @@ POSIX::AtFork - Hook registrations at fork(2)
   POSIX::AtFork->add_to_parent(\&parent);
   POSIX::AtFork->add_to_child(\&child);
 
+  # registered callbacks can be removed
+  POSIX::AtFork->delete_from_prepare(\&prepare);
+  POSIX::AtFork->delete_from_parent( \&parent);
+  POSIX::AtFork->delete_from_child(  \&child);
+
 =head1 DESCRIPTION
 
 This module is an interface to C<pthread_atfork(3)> which registeres
