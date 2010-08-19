@@ -7,6 +7,7 @@ all_from 'lib/POSIX/AtFork.pm';
 cc_warnings;
 use_ppport;
 
+test_requires 'Test::SharedFork';
 test_requires 'Test::More' => 0.88; # done_testing()
 
 tests_recursive;
