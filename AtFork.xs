@@ -5,6 +5,8 @@
 
 #include "ppport.h"
 
+#include <pthread.h>
+
 #define MY_CXT_KEY "POSIX::AtFork::_guts" XS_VERSION
 typedef struct {
     AV* prepare_list;
@@ -92,7 +94,7 @@ paf_delete(pTHX_ AV* const av, SV* const cb) {
 
 static void
 paf_initialize(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
-    PTHREAD_ATFORK(paf_prepare, paf_parent, paf_child);
+    pthread_atfork(paf_prepare, paf_parent, paf_child);
 
     MY_CXT.prepare_list = newAV();
     MY_CXT.parent_list  = newAV();
