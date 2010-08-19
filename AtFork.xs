@@ -52,6 +52,14 @@ static void
 paf_child(void) {
     dTHX;
     dMY_CXT;
+    SV* pidsv;
+
+    /* fix up pid */
+    pidsv = get_sv("$", GV_ADD);
+    SvREADONLY_off(pidsv);
+    sv_setiv(pidsv, (IV)PerlProc_getpid());
+    SvREADONLY_on(pidsv);
+
     paf_call_list(aTHX_ MY_CXT.child_list);
 }
 
