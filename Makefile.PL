@@ -7,6 +7,8 @@ all_from 'lib/POSIX/AtFork.pm';
 cc_warnings;
 use_ppport;
 
+cc_libs 'pthread';
+
 test_requires 'Test::SharedFork';
 test_requires 'Test::More' => 0.88; # done_testing()
 
