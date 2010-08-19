@@ -8,7 +8,8 @@ our $VERSION = '0.01';
 require Exporter;
 our @ISA = qw(Exporter);
 
-our @EXPORT_OK = qw(pthread_atfork);
+our @EXPORT_OK   = qw(pthread_atfork);
+our %EXPORT_TAGS = (ALL => \@EXPORT_OK);
 
 require XSLoader;
 XSLoader::load('POSIX::AtFork', $VERSION);
@@ -19,26 +20,28 @@ __END__
 
 =head1 NAME
 
-POSIX::AtFork - Perl extension for blah blah blah
+POSIX::AtFork - Hook registrations at fork(2)
 
 =head1 SYNOPSIS
 
-  use POSIX::AtFork;
-  blah blah blah
+  # POSIX interface:
+  use POSIX::AtFork qw(pthread_atfork);
+  
+  pthread_atfork(\&prepare, \&parent, \&child);
+
+  # or per-hook interfaces:
+  POSIX::AtFork->add_to_prepare(\&prepare);
+  POSIX::AtFork->add_to_parent(\&parent);
+  POSIX::AtFork->add_to_child(\&child);
 
 =head1 DESCRIPTION
 
-Stub documentation for POSIX::AtFork, created by h2xs. It looks like the
-author of the extension was negligent enough to leave the stub
-unedited.
+This module is an interface to C<pthread_atfork(3)> which registeres
+handlers called before and after C<fork(2)>.
 
-Blah blah blah.
+=head2 INTERFACE
 
-=head2 EXPORT
-
-None by default.
-
-
+See SYNOPSIS.
 
 =head1 SEE ALSO
 
