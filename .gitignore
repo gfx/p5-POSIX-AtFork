@@ -2,6 +2,7 @@ blib/
 inc/
 Makefile
 *.old
+*.bak
 *.swp
 AtFork.c
 *~

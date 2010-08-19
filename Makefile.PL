@@ -11,4 +11,8 @@ test_requires 'Test::More' => 0.88; # done_testing()
 
 tests_recursive;
 
+clean_files q{
+    *.o
+};
+
 WriteAll(check_nmake => 0);
