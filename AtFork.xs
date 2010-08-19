@@ -107,3 +107,30 @@ CODE:
    paf_register_cb(aTHX_ MY_CXT.parent_list,  parent);
    paf_register_cb(aTHX_ MY_CXT.child_list,   child);
 }
+
+
+void
+add_to_prepare(klass, SV* cb)
+CODE:
+{
+   dMY_CXT;
+   paf_register_cb(aTHX_ MY_CXT.prepare_list, cb);
+}
+
+
+void
+add_to_parent(klass, SV* cb)
+CODE:
+{
+   dMY_CXT;
+   paf_register_cb(aTHX_ MY_CXT.parent_list, cb);
+}
+
+
+void
+add_to_child(klass, SV* cb)
+CODE:
+{
+   dMY_CXT;
+   paf_register_cb(aTHX_ MY_CXT.child_list, cb);
+}
