@@ -1,5 +1,8 @@
 Revision history for Perl extension POSIX::AtFork.
 
+0.01_05
+    - Pass the current opname to callbacks
+
 0.01_04
     - Fix up $$ before 'child' callbacks are callled (reported by kazeburo)
     - Specify libpthread for non-threaded perls (reported by tokuhirom)
