@@ -25,7 +25,7 @@ POSIX::AtFork - Hook registrations at fork(2)
 =head1 SYNOPSIS
 
   # POSIX interface:
-  use POSIX::AtFork qw(pthread_atfork);
+  use POSIX::AtFork qw(:all);
   
   pthread_atfork(\&prepare, \&parent, \&child);
 
@@ -44,9 +44,41 @@ POSIX::AtFork - Hook registrations at fork(2)
 This module is an interface to C<pthread_atfork(3)> which registeres
 handlers called before and after C<fork(2)>.
 
-=head2 INTERFACE
+=head1 INTERFACE
 
-See SYNOPSIS.
+=head2 pthread_atfork(\&prepare, \&parent, \&child)
+
+This exportable function is an interface to C<pthread_atfork(3)>.
+
+Registeres hooks called before C<fork()> (I<&prepare>) and after
+(I<&parent> for the parent, I<&child> for the child).
+
+All callbacks are called with the current opname, namely C<fork>,
+C<system>, C<backtick>, and etc.
+
+=head2 POSIX::AtFork->add_to_prepare(\&hook)
+
+The same as C<pthread_atfork(\&hook, undef, undef)>.
+
+=head2 POSIX::AtFork->add_to_parent(\&hook)
+
+The same as C<pthread_atfork(undef, \&hook, undef)>.
+
+=head2 POSIX::Atfork->add_to_child(\&hook)
+
+The same as C<pthread_atfork(undef, undef, \&hook)>.
+
+=head2 POSIX::AtFork->delete_from_prepare(\&hook)
+
+Deletes I<&hook> from the C<prepare> hook list.
+
+=head2 POSIX::AtFork->delete_from_parent(\&hook)
+
+Deletes I<&hook> from the C<parent> hook list.
+
+=head2 POSIX::AtFork->delete_from_child(\&hook)
+
+Deletes I<&hook> from the C<child> hook list.
 
 =head1 SEE ALSO
 
