@@ -19,6 +19,11 @@ static void
 paf_call_list(pTHX_ AV* const av) {
     I32 const len = av_len(av) + 1;
     I32 i;
+
+    if(PL_op->op_type == OP_SYSTEM || PL_op->op_type == OP_BACKTICK) {
+        return;
+    }
+
     ENTER;
     SAVETMPS;
     for(i = 0; i < len; i++) {
