@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Test::More tests => 10;
 use Test::SharedFork;
-use POSIX::AtFork qw(:ALL);
+use POSIX::AtFork qw(:all);
 use POSIX qw(getpid);
 
 my $prepare = 0;

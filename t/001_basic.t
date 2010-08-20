@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Test::More tests => 6;
 use Test::SharedFork;
-use POSIX::AtFork qw(:ALL);
+use POSIX::AtFork qw(:all);
 
 my $prepare = 0;
 my $parent  = 0;
