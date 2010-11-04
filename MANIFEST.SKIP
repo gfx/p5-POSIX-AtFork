@@ -8,4 +8,5 @@ AtFork\.(?:c|o|bs)$
 Makefile$
 pm_to_blib$
 ppport\.h$
+MYMETA.yml
 

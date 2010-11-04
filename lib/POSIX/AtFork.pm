@@ -3,7 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 
-our $VERSION = '0.01_05';
+our $VERSION = '0.02';
 
 require Exporter;
 our @ISA = qw(Exporter);
