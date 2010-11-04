@@ -41,20 +41,20 @@ POSIX::AtFork - Hook registrations at fork(2)
 
 =head1 DESCRIPTION
 
-This module is an interface to C<pthread_atfork(3)> which registeres
+This module is an interface to C<pthread_atfork(3)>, which registeres
 handlers called before and after C<fork(2)>.
 
 =head1 INTERFACE
 
 =head2 pthread_atfork(\&prepare, \&parent, \&child)
 
-This exportable function is an interface to C<pthread_atfork(3)>.
-
 Registeres hooks called before C<fork()> (I<&prepare>) and after
 (I<&parent> for the parent, I<&child> for the child).
 
 All callbacks are called with the current opname, namely C<fork>,
 C<system>, C<backtick>, and etc.
+
+This exportable function is an interface to C<pthread_atfork(3)>.
 
 =head2 POSIX::AtFork->add_to_prepare(\&hook)
 
@@ -82,7 +82,9 @@ Deletes I<&hook> from the C<child> hook list.
 
 =head1 SEE ALSO
 
-L<pthread_atfork(3)>.
+L<pthread_atfork(3)>
+
+L<fork(2)>
 
 =head1 AUTHOR
 
