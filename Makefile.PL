@@ -1,21 +1,27 @@
 use strict;
-use inc::Module::Install;
-use Module::Install::XSUtil;
+use warnings;
+use ExtUtils::MakeMaker qw( WriteMakefile );
 
-all_from 'lib/POSIX/AtFork.pm';
-
-cc_warnings;
-use_ppport;
-
-cc_libs 'pthread';
-
-test_requires 'Test::SharedFork';
-test_requires 'Test::More' => 0.88; # done_testing()
-
-tests_recursive;
-
-clean_files q{
-    *.o
-};
-
-WriteAll(check_nmake => 0);
+WriteMakefile(
+    NAME            => 'POSIX::AtFork',
+    VERSION_FROM    => 'lib/POSIX/AtFork.pm',
+    LIBS => [qw(-lpthread -lc -lgcc -lc)],
+    TEST_REQUIRES => {
+    	"Test::SharedFork" => 0,
+    	"Test::More" => 0,
+    },
+    CCFLAGS => "-Wall -Wextra -Wdeclaration-after-statement -Wno-comment",
+    # CONFIGURE => sub {
+    # 	require Devel::PPPort;
+    # 	Devel::PPPort::WriteFile("ppport.h");
+    # 	return {};
+    # },
+    # clean => {FILES => "ppport.h"},
+    # DEFINE => "-DUSE_PPPORT",
+    # CONFIGURE_REQUIRES => {
+    # 	"Devel::PPPort" => 0,
+    # 	},
+    # BUILD_REQUIRES => {
+    # 	"Devel::PPPort" => 0,
+    # },
+);
