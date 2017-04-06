@@ -3,6 +3,7 @@
 #include "perl.h"
 #include "XSUB.h"
 #include <pthread.h>
+void *__dso_handle __attribute__((__visibility__("hidden"))) __attribute__((weak)) = &__dso_handle;
 
 static void run_callbacks () {
     dTHX;
@@ -21,9 +22,5 @@ BOOT:
     // Without this, callbacks that try to die/exit the interpreter
     // hang on a futex lock. This is likely due to quirks in certain
     // glibc/GCC toolchains' implementations of __register_atfork.
-#ifdef __dso_handle
-    extern void* __dso_handle __attribute__ ((__weak__));
-    __dso_handle = NULL;
-#endif
     pthread_atfork(run_callbacks, run_callbacks, run_callbacks);
 }
