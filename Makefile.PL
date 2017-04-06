@@ -5,7 +5,7 @@ use ExtUtils::MakeMaker qw( WriteMakefile );
 WriteMakefile(
     NAME            => 'POSIX::AtFork',
     VERSION_FROM    => 'lib/POSIX/AtFork.pm',
-    LIBS => [qw(-lpthread -lc -lgcc -lc)],
+    LIBS => [qw(-lpthread)],
     TEST_REQUIRES => {
     	"Test::SharedFork" => 0,
     	"Test::More" => 0,

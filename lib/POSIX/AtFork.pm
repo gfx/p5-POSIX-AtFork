@@ -30,7 +30,10 @@ my %callbacks = (
 );
 
 add_to_parent(sub { $didprepare = 0; });
-add_to_child(sub { $didprepare = 0; }); # TODO only non-vforkish
+add_to_child(sub { $didprepare = 0; });
+
+# Calls warn. In a separate sub for test mocking.
+sub _warn { warn @_; }
 
 sub _run_callbacks ($) {
 
@@ -40,23 +43,70 @@ sub _run_callbacks ($) {
 
   foreach my $array (values(%{$callbacks{$type}})) {
     foreach my $cb (@$array) {
-      local $@;
-      eval {
-        $cb->(@_);
-      };
-      warn "Callback for pthread_atfork() died (ignored): $@" if $@;
+      # die/warn in callbacks can violate the contracts of an error mode:
+      # e.g. a __WARN__ handler might die even if death is not allowed.
+      local $SIG{__DIE__};
+      local $SIG{__WARN__};
+      if ( $cb->{onerror} eq "die" ) {
+        $cb->{code}->(@_);
+      } else {
+        local $@;
+        eval {
+          $cb->{code}->(@_);
+        };
+        if ( $@ && $cb->{onerror} eq "warn" ) {
+          _warn("Callback for pthread_atfork() died (ignored): $@");
+        }
+      }
     }
   }
 }
 
 sub _manip_callbacks {
-  shift if $_[0] eq __PACKAGE__;
-  my ( $cb, $type, $remove ) = @_;
-  if ( $remove ) {
-    return @{delete $callbacks{$type}->{$cb}};
-  } else {
-    return push(@{$callbacks{$type}->{$cb}}, $cb);
+  my $args = shift;
+  my $type = delete $args->{type};
+  my $name = delete $args->{name};
+  if ( ! exists($callbacks{$type}) ) {
+    die "event type '$args->{type}' not recognized";
   }
+
+  if ( delete $args->{remove} ) {
+    return @{delete $callbacks{$type}->{$name} };
+  } else {
+    return push(@{$callbacks{$type}->{$name}}, $args);
+  }
+}
+
+# Parameters:
+# code (required): coderef to run.
+# onerror: die, warn, or silent.
+# name: key for use in delete; defaults to stringy version of coderef.
+sub _getargs {
+  shift if $_[0] eq __PACKAGE__;
+  my %args;
+  if ( scalar(@_) == 1 ) {
+    if ( ref($_[0]) eq "CODE" ) {
+      %args = (
+        code => $_[0],
+        onerror => "warn",
+      );
+    } elsif ( ref($_[0]) eq "HASH" ) {
+      %args = %{$_[0]};
+    } else {
+      die "Arguments must be a code or hash reference";
+    }
+  } else {
+    %args = @_;
+  }
+
+  die "'code' attribute is required" unless $args{code};
+  $args{name} ||= "$args{code}";
+  $args{onerror} ||= "silent";
+  if ( ! grep { $args{onerror} } qw( warn die silent ) ) {
+    die "'onerror' must be one of warn, die, or silent; got '$args{onerror}' instead";
+  }
+  # Assertions go here
+  return %args;
 }
 
 sub pthread_atfork {
@@ -66,23 +116,12 @@ sub pthread_atfork {
   add_to_child(shift);
 }
 
-sub add_to_prepare { push(@_, PREPARE); goto &_manip_callbacks; }
-sub add_to_parent { push(@_, PARENT); goto &_manip_callbacks; }
-sub add_to_child { push(@_, CHILD); goto &_manip_callbacks; }
-sub delete_from_prepare { push(@_, PREPARE, 1); goto &_manip_callbacks; }
-sub delete_from_parent { push(@_, PARENT, 1); goto &_manip_callbacks; }
-sub delete_from_child { push(@_, CHILD, 1); goto &_manip_callbacks; }
-
-# ZBTODO weakref callback support
-# ZBTODO clear_all_*
-# ZBTODO fatal or non: prepare defaults to fatal??
-# ZBTODO even for nonfatal, keep first-encountered $@ around and set it like KEEPERR.
-# ZBTODO test what happens if fork itself fails; document that prepare hooks still ran.
-# ZBTODO support "remove one reference to this sub"
-# ZBTODO support blocks to execute
-# ZBTODO fall back to __register_atfork?
-# ZBTODO check return codes.
-# ZBTODO update system_t to opname_t, test for more stuffs (basic fork, c forkers?)
+sub add_to_prepare { return _manip_callbacks({ _getargs(@_), type => PREPARE, remove => 0 }); }
+sub add_to_parent { return _manip_callbacks({ _getargs(@_), type => PARENT, remove => 0 }); }
+sub add_to_child { return _manip_callbacks({ _getargs(@_), type => CHILD, remove => 0 }); }
+sub delete_from_prepare { return _manip_callbacks({_getargs(@_), type => PREPARE, remove => 1 }); }
+sub delete_from_parent { return _manip_callbacks({_getargs(@_), type => PARENT, remove => 1 }); }
+sub delete_from_child { return _manip_callbacks({_getargs(@_), type => CHILD, remove => 1 }); }
 
 1;
 __END__

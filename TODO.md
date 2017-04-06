@@ -1,0 +1,21 @@
+
+- prohibit nested invocation of fork/system in callbacks? Or test that it works?
+- weakref callback support: bugs out currently
+- clear_all_*
+- fatal errors or not? should prepare's default to fatal, and the others not so?
+- what about multiple errors? stop running callbacks after the first? or not?
+- even for nonfatal, keep first-encountered $@ around and set it like KEEPERR.
+- support "remove one reference to this sub"
+- support blocks to execute
+- fall back to __register_atfork?
+- check return codes.
+- update system_t to opname_t, test for more stuffs (basic fork, c forkers?)
+- `local`izable atfork hooks using guards.
+- Filters: hooks that only run for `system` or `fork` calls, as opposed to others.
+- Tests for C code that calls `fork(2)` directly; how does this package interact with that?
+- Tests for code that re-`exec`s itself; how does this package interact with that?
+- Tess for code that calls fork multiple times, or forks again in the child.
+- Hooks that uninstall themselves if called repeatedly (e.g. a process that forks multiple times, or multiple levels of forks).
+- Tests for what happens if `fork()` itself fails (e.g. no PIDs left on system).
+- Tests for `qx`, `open('|-')`, and other constructs -> documentation on what the op name will be in those cases.
+- Is there some `OP` identifier that doesn't require dynamic allocation such that we could look up the op description in Perl?
