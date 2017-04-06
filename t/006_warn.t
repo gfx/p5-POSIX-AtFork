@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings "redefine";
 
-use Test::More tests => 9;
+use Test::More tests => 13;
 use Test::SharedFork;
 use POSIX::AtFork qw(:all);
 use POSIX qw(getpid);
@@ -22,6 +22,8 @@ eval {
 };
 ok(! $@, '$@ not set');
 ok(! $!, "OS_ERROR not set");
+is(scalar(@warnings), 1, "Only one warning logged");
+is(index($warnings[0], "Callback for pthread_atfork() died (ignored): foo"), 0, "Correct warning logged");
 if ( $pid == 0 ) {
 	is($$, getpid(), "Child PID is accurate");
 	ok($$ != $oldpid, "Child is not parent");
