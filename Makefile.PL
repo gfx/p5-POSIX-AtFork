@@ -2,11 +2,14 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker qw( WriteMakefile );
 
+my @v = split(".", $ExtUtils::MakeMaker::VERSION);
+my $testrequireskey = $v[0] < 6 || ( $v[0] == 6 && $v[1] < 64 ) ? "BUILD_REQUIRES" : "TEST_REQUIRES";
+
 WriteMakefile(
     NAME            => 'POSIX::AtFork',
     VERSION_FROM    => 'lib/POSIX/AtFork.pm',
     LIBS => [qw(-lpthread)],
-    TEST_REQUIRES => {
+    $testrequireskey => {
     	"Test::SharedFork" => 0,
     	"Test::More" => 0,
     },
