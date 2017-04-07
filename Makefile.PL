@@ -1,8 +1,9 @@
 use strict;
 use warnings;
 use ExtUtils::MakeMaker qw( WriteMakefile );
+use Data::Dumper;
 
-my @v = split(".", $ExtUtils::MakeMaker::VERSION);
+my @v = split(/[.]/, $ExtUtils::MakeMaker::VERSION);
 my $testrequireskey = $v[0] < 6 || ( $v[0] == 6 && $v[1] < 64 ) ? "BUILD_REQUIRES" : "TEST_REQUIRES";
 
 WriteMakefile(
@@ -11,6 +12,7 @@ WriteMakefile(
     LIBS => [qw(-lpthread)],
     $testrequireskey => {
     	"Test::SharedFork" => 0,
+        "Test::SharedFork::Scalar" => 0,
     	"Test::More" => 0,
     },
     CCFLAGS => "-Wall -Wextra -Wdeclaration-after-statement -Wno-comment",
