@@ -1,9 +1,10 @@
 use strict;
 use warnings;
 use ExtUtils::MakeMaker qw( WriteMakefile );
-use Data::Dumper;
 
-my @v = split(/[.]/, $ExtUtils::MakeMaker::VERSION);
+# "Parse" version, strip out e.g. 5.5_05 post-underscore bits.
+my @v = map { /^(\d+)/ } split(/[.]/, $ExtUtils::MakeMaker::VERSION || "1.0");
+# TEST_REQUIRES only added in 6.64.
 my $testrequireskey = $v[0] < 6 || ( $v[0] == 6 && $v[1] < 64 ) ? "BUILD_REQUIRES" : "TEST_REQUIRES";
 
 WriteMakefile(
