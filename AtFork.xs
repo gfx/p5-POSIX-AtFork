@@ -35,5 +35,6 @@ static void run_callbacks () {
 }
 
 MODULE = POSIX::AtFork    PACKAGE = POSIX::AtFork    PREFIX = posix_atfork_
+PROTOTYPES: DISABLE
 BOOT:
 pthread_atfork(run_callbacks, run_callbacks, run_callbacks);
