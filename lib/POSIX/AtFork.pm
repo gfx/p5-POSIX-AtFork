@@ -71,7 +71,7 @@ sub _manip_callbacks {
   }
 
   if ( delete $args->{remove} ) {
-    return @{delete $callbacks{$type}->{$name} };
+    return @{delete($callbacks{$type}->{$name}) || []};
   } else {
     return push(@{$callbacks{$type}->{$name}}, $args);
   }

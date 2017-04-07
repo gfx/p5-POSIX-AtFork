@@ -1,9 +1,8 @@
 #!perl
-use strict;
-use warnings;
+use FindBin;
+use lib $FindBin::Bin;
+use testlib qw( dofork prefix );
 use Test::More tests => 12;
-use Test::SharedFork;
-use POSIX::AtFork;
 
 my $prepare1 = 0;
 my $prepare2 = 0;
@@ -40,26 +39,25 @@ POSIX::AtFork->add_to_child(\&child1);
 POSIX::AtFork->add_to_child(\&child2);
 POSIX::AtFork->delete_from_child(\&child2);
 
-my $pid = fork;
-die "Failed to fork: $!" if not defined $pid;
+my $pid = dofork;
 
 if($pid != 0) {
-    is $prepare1, 2, '&prepare1 in parent';
-    is $prepare2, 0, '&prepare2 in parent';
-    is $parent1,  2, '&parent1 in parent';
-    is $parent2,  0, '&parent2 in parent';
-    is $child1,  0, '&child1 in parent';
-    is $child2,  0, '&child2 in parent';
+    is $prepare1, 2, prefix . '&prepare1 in parent';
+    is $prepare2, 0, prefix . '&prepare2 in parent';
+    is $parent1,  2, prefix . '&parent1 in parent';
+    is $parent2,  0, prefix . '&parent2 in parent';
+    is $child1,  0, prefix . '&child1 in parent';
+    is $child2,  0, prefix . '&child2 in parent';
     waitpid $pid, 0;
     exit;
 }
 else {
-	is $prepare1, 2, '&prepare1 in child';
-	is $prepare2, 0, '&prepare2 in child';
-	is $parent1,  0, '&parent1 in child';
-	is $parent2,  0, '&parent2 in child';
-	is $child1,  2, '&child1 in child';
-	is $child2,  0, '&child2 in child';
+	is $prepare1, 2, prefix . '&prepare1 in child';
+	is $prepare2, 0, prefix . '&prepare2 in child';
+	is $parent1,  0, prefix . '&parent1 in child';
+	is $parent2,  0, prefix . '&parent2 in child';
+	is $child1,  2, prefix . '&child1 in child';
+	is $child2,  0, prefix . '&child2 in child';
 
     exit;
 }
