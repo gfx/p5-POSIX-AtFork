@@ -3,7 +3,8 @@ use warnings;
 use ExtUtils::MakeMaker qw( WriteMakefile );
 
 # "Parse" version, strip out e.g. 5.5_05 post-underscore bits.
-my @v = map { /^(\d+)/ } split(/[.]/, $ExtUtils::MakeMaker::VERSION || "1.0");
+my @v = map { my @b = split(/[^0-9]/, $_); shift(@b); } split(/[.]/, $ExtUtils::MakeMaker::VERSION || "1.0");
+$v[1] = substr($v[1], 0, 2) if length($v[1]) > 2;
 # TEST_REQUIRES only added in 6.64.
 my $testrequireskey = $v[0] < 6 || ( $v[0] == 6 && $v[1] < 64 ) ? "BUILD_REQUIRES" : "TEST_REQUIRES";
 
