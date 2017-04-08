@@ -26,8 +26,10 @@ eval {
 	# If we somehow forked, don't break the test output.
 	exit if defined($pid) && $pid == 0;
 };
+$@ = " '$@'" if $@;
+$! = " '$!'" if $!;
 ok($@ =~ qr/foo/, prefix . "Dies with expected error");
-ok(! $!, prefix . "OS_ERROR not set");
+ok(! $!, prefix . "OS_ERROR not set $!");
 is($$, getpid(), prefix . "can read pid");
 is(getppid(), $oldppid, prefix . "child is created as expected");
 # Check standard return behavior, since we're messing about in calls where perl thinks
