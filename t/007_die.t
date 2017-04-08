@@ -2,7 +2,7 @@
 use FindBin;
 use lib $FindBin::Bin;
 use testlib qw( dofork prefix );
-use Test::More tests => 6;
+use Test::More tests => 5;
 use POSIX qw(getpid);
 
 my $parent;
@@ -19,17 +19,14 @@ my $oldpid = $$;
 my $oldppid = getppid();
 my $pid;
 
-local $@;
-local $!;
+$@ = undef;
 eval {
 	$pid = dofork;
 	# If we somehow forked, don't break the test output.
 	exit if defined($pid) && $pid == 0;
 };
 $@ = " '$@'" if $@;
-$! = " '$!'" if $!;
 ok($@ =~ qr/foo/, prefix . "Dies with expected error");
-ok(! $!, prefix . "OS_ERROR not set $!");
 is($$, getpid(), prefix . "can read pid");
 is(getppid(), $oldppid, prefix . "child is created as expected");
 # Check standard return behavior, since we're messing about in calls where perl thinks

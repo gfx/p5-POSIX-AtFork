@@ -35,12 +35,12 @@ sub import {
 sub dofork {
 	$OS_ERROR = undef;
 	my $pid = fork();
-	warn prefix . sprintf("unexpected errno: %d (%s)\n", int($OS_ERROR), $OS_ERROR) if $OS_ERROR;
+	# warn prefix . sprintf("unexpected errno: %d (%s)\n", int($OS_ERROR), $OS_ERROR) if $OS_ERROR;
 	die "couldn't read process id variable" unless $PROCESS_ID;
 	die "couldn't getpid()" unless getpid();
 	die "pid reader mismatch: $PROCESS_ID vs " . getpid() if $PROCESS_ID != getpid();
 	die "Failed to fork: $!" if not defined $pid;
-	return $pid;
+	return wantarray ? ( $pid, $OS_ERROR ) : $pid;
 }
 
 1;

@@ -44,7 +44,6 @@ sub _run_callbacks ($$) {
       # e.g. a __WARN__ handler might die even if death is not allowed.
       local $SIG{__DIE__};
       local $SIG{__WARN__};
-      local $!;
       if ( $cb->{onerror} eq "die" ) {
         $cb->{code}->($op);
       } else {
