@@ -35,7 +35,7 @@ add_to_child(sub { $didprepare = 0; });
 # Calls warn. In a separate sub for test mocking.
 sub _warn { warn @_; }
 
-sub _run_callbacks ($$) {
+sub _run_callbacks {
   my ( $op, $type ) = @_;
 
   foreach my $array (values(%{$callbacks{$type}})) {
@@ -102,7 +102,6 @@ sub _getargs {
   if ( ! grep { $args{onerror} } qw( warn die silent ) ) {
     die "'onerror' must be one of warn, die, or silent; got '$args{onerror}' instead";
   }
-  # Assertions go here
   return %args;
 }
 

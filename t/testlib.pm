@@ -5,6 +5,7 @@ use warnings;
 use English qw( -no-match-vars );
 use POSIX qw( getpid );
 use POSIX::AtFork;
+use Test::SharedFork;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw( dofork prefix );
@@ -26,7 +27,6 @@ sub import {
 	strict->import;
 	warnings->import;
 	warnings->unimport('uninitialized');
-	require Test::SharedFork;
 	Test::SharedFork->import;
 	English->export_to_level(1, $_[0], @English::MINIMAL_EXPORT);
 	POSIX::AtFork->import;
