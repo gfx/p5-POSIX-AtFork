@@ -21,7 +21,6 @@
 // - https://bugs.launchpad.net/ubuntu/+source/perl/+bug/24406
 // - http://stackoverflow.com/questions/28003587
 
-
 void *__dso_handle __attribute__((__visibility__("hidden"))) __attribute__((weak)) = &__dso_handle;
 
 static char* cbargs[3] = {NULL, NULL, NULL};

@@ -20,6 +20,7 @@ my $oldppid = getppid();
 my $pid;
 
 local $@;
+local $!;
 eval {
 	$pid = dofork;
 	# If we somehow forked, don't break the test output.

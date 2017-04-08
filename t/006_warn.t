@@ -12,6 +12,7 @@ my $oldpid = $$;
 my $pid;
 my @warnings;
 local $@;
+local $!;
 eval {
 	# Use a mock since we can't use $SIG{__WARN__}.
 	local *POSIX::AtFork::_warn = sub { push(@warnings, @_); };
