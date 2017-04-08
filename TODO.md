@@ -19,3 +19,6 @@
 - Tests for what happens if `fork()` itself fails (e.g. no PIDs left on system).
 - Tests for `qx`, `open('|-')`, and other constructs -> documentation on what the op name will be in those cases.
 - Is there some `OP` identifier that doesn't require dynamic allocation such that we could look up the op description in Perl?
+- Document that errno cannot be trusted, and users should unset/test it themselves if they want to.
+  - e.g. perl 5.10 via perlbrew on OSX calls bsdthread_register() and and csops() in error, resulting in errno being EINVAL, but only getting set during the forking operation.
+  - e.g. perl 5.18 builtin on OSX calls something that sets it to "result too big", but only in the child.

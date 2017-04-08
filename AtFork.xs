@@ -20,15 +20,23 @@
 // - https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=223110
 // - https://bugs.launchpad.net/ubuntu/+source/perl/+bug/24406
 // - http://stackoverflow.com/questions/28003587
-
 void *__dso_handle __attribute__((__visibility__("hidden"))) __attribute__((weak)) = &__dso_handle;
 
 static char* cbargs[3] = {NULL, NULL, NULL};
-static int olderrno = 0;
 
 static void paf_run_callbacks (char* type) {
     cbargs[1] = type;
     dTHX;
+    if ( strcmp(type, "child") == 0 ) {
+        IV pid = PerlProc_getpid();    
+        SV* pidsv = get_sv("$", GV_ADD);
+        
+        if (pid != sv_2iv_flags(pidsv, SV_GMAGIC)) {
+            SvREADONLY_off(pidsv);
+            sv_setiv(pidsv, (IV)pid);
+            SvREADONLY_on(pidsv);
+        }
+    }
 
     // The cast is safe: call_argv accepts a char**, and iterates through the
     // array by incrementing the outer pointer, but the inner char* is just
@@ -38,23 +46,6 @@ static void paf_run_callbacks (char* type) {
 }
 
 static void paf_child() {
-    #if defined __APPLE__ && defined __MACH__
-    // On some OSXes, the act of running atfork hooks during fork of a single-threaded
-    // program calls bsdthread_register() and and csops() in error, resulting in errno
-    // being EINVAL, but only getting set during the forking operation.
-    if ( olderrno != errno && errno == EINVAL ) {
-        errno = 0;
-    }
-    #endif
-    dTHX;
-    IV pid = PerlProc_getpid();    
-    SV* pidsv = get_sv("$", GV_ADD);
-    
-    if (pid != sv_2iv_flags(pidsv, SV_GMAGIC)) {
-        SvREADONLY_off(pidsv);
-        sv_setiv(pidsv, (IV)pid);
-        SvREADONLY_on(pidsv);
-    }
     paf_run_callbacks("child");
 }
 
@@ -63,7 +54,6 @@ static void paf_parent() {
 }
 
 static void paf_prepare() {
-    olderrno = errno;
     paf_run_callbacks("prepare");
 }
 
