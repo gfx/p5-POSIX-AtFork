@@ -18,7 +18,9 @@ eval {
 	local *POSIX::AtFork::_warn = sub { push(@warnings, @_); };
 	$pid = dofork;
 };
-ok(! $@, prefix . '$@ not set');
+$@ = " '$@'" if $@;
+$! = " '$!'" if $!;
+ok(! $@, prefix . '$@ not set' . $@);
 ok(! $!, prefix . "OS_ERROR not set $!");
 is(scalar(@warnings), 1, prefix . "Only one warning logged");
 is(index($warnings[0], "Callback for pthread_atfork() died (ignored): foo"), 0, prefix . "Correct warning logged");
