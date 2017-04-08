@@ -3,6 +3,7 @@
 #include "perl.h"
 #include "XSUB.h"
 #include <pthread.h>
+#include <errno.h>
 
 // Without this, callbacks that try to die/exit the interpreter
 // hang on a futex lock. This is likely due to quirks in certain
@@ -23,10 +24,13 @@
 
 void *__dso_handle __attribute__((__visibility__("hidden"))) __attribute__((weak)) = &__dso_handle;
 
-static char* cbargs[2] = {NULL, NULL};
+static char* cbargs[3] = {NULL, NULL, NULL};
+static int olderrno = 0;
 
-static void run_callbacks () {
+static void paf_run_callbacks (char* type) {
+    cbargs[1] = type;
     dTHX;
+
     // The cast is safe: call_argv accepts a char**, and iterates through the
     // array by incrementing the outer pointer, but the inner char* is just
     // supplied to newSV* functions that copy it rather than mutating.
@@ -34,6 +38,36 @@ static void run_callbacks () {
     call_argv("POSIX::AtFork::_run_callbacks", G_VOID | G_KEEPERR | G_DISCARD, cbargs);
 }
 
+static void paf_child() {
+    #if defined __APPLE__ && defined __MACH__
+    // On some OSXes, the act of running atfork hooks during fork of a single-threaded
+    // program calls bsdthread_register() and and csops() in error, resulting in errno
+    // being EINVAL, but only getting set during the forking operation.
+    if ( olderrno != errno && errno == EINVAL ) {
+        errno = 0;
+    }
+    #endif
+    dTHX;
+    IV pid = PerlProc_getpid();    
+    SV* pidsv = get_sv("$", GV_ADD);
+    
+    if (pid != sv_2iv_flags(pidsv, SV_GMAGIC)) {
+        SvREADONLY_off(pidsv);
+        sv_setiv(pidsv, (IV)pid);
+        SvREADONLY_on(pidsv);
+    }
+    paf_run_callbacks("child");
+}
+
+static void paf_parent() {
+    paf_run_callbacks("parent");
+}
+
+static void paf_prepare() {
+    olderrno = errno;
+    paf_run_callbacks("prepare");
+}
+
 MODULE = POSIX::AtFork    PACKAGE = POSIX::AtFork    PREFIX = posix_atfork_
 BOOT:
-pthread_atfork(run_callbacks, run_callbacks, run_callbacks);
+pthread_atfork(paf_prepare, paf_parent, paf_child);

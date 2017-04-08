@@ -35,11 +35,8 @@ add_to_child(sub { $didprepare = 0; });
 # Calls warn. In a separate sub for test mocking.
 sub _warn { warn @_; }
 
-sub _run_callbacks ($) {
-
-  my $type = $oldpid == $$ ? $didprepare++ ? PARENT : PREPARE : CHILD;
-
-  $oldpid = $$;
+sub _run_callbacks ($$) {
+  my ( $op, $type ) = @_;
 
   foreach my $array (values(%{$callbacks{$type}})) {
     foreach my $cb (@$array) {
@@ -48,11 +45,11 @@ sub _run_callbacks ($) {
       local $SIG{__DIE__};
       local $SIG{__WARN__};
       if ( $cb->{onerror} eq "die" ) {
-        $cb->{code}->(@_);
+        $cb->{code}->($op);
       } else {
         local $@;
         eval {
-          $cb->{code}->(@_);
+          $cb->{code}->($op);
         };
         if ( $@ && $cb->{onerror} eq "warn" ) {
           _warn("Callback for pthread_atfork() died (ignored): $@");
