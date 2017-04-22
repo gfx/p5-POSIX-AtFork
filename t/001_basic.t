@@ -1,35 +1,32 @@
 #!perl
-use strict;
-use warnings;
+
+use FindBin;
+use lib $FindBin::Bin;
+use testlib qw( dofork prefix );
 use Test::More tests => 6;
-use Test::SharedFork;
-use POSIX::AtFork qw(:all);
 
 my $prepare = 0;
 my $parent  = 0;
 my $child   = 0;
 
-pthread_atfork(
+POSIX::AtFork->pthread_atfork(
     sub { $prepare++ },
     sub { $parent++ },
     sub { $child++ },
 );
 
-my $pid = fork;
-die "Failed to fork: $!" if not defined $pid;
+my $pid = dofork;
 
 if($pid != 0) {
-    is $prepare, 1, '&prepare in parent';
-    is $parent,  1, '&parent in parent';
-    is $child,   0, '&child in parent';
+    is $prepare, 1, prefix . '&prepare in parent';
+    is $parent,  1, prefix . '&parent in parent';
+    is $child,   0, prefix . '&child in parent';
     waitpid $pid, 0;
     exit;
 }
 else {
-    is $prepare, 1, '&prepare in child';
-    is $parent,  0, '&parent in child';
-    is $child,   1, '&child in child';
+    is $prepare, 1, prefix . '&prepare in child';
+    is $parent,  0, prefix . '&parent in child';
+    is $child,   1, prefix . '&child in child';
     exit;
 }
-
-

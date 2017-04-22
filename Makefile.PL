@@ -2,13 +2,20 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker qw( WriteMakefile );
 
+# "Parse" version, strip out e.g. 5.5_05 post-underscore bits.
+my @v = map { my @b = split(/[^0-9]/, $_); shift(@b); } split(/[.]/, $ExtUtils::MakeMaker::VERSION || "1.0");
+$v[1] = substr($v[1], 0, 2) if length($v[1]) > 2;
+# TEST_REQUIRES only added in 6.64.
+my $testrequireskey = $v[0] < 6 || ( $v[0] == 6 && $v[1] < 64 ) ? "BUILD_REQUIRES" : "TEST_REQUIRES";
+
 WriteMakefile(
-    NAME            => 'POSIX::AtFork',
-    VERSION_FROM    => 'lib/POSIX/AtFork.pm',
+    NAME => 'POSIX::AtFork',
+    VERSION_FROM => 'lib/POSIX/AtFork.pm',
     LIBS => [qw(-lpthread)],
-    TEST_REQUIRES => {
-    	"Test::SharedFork" => 0,
-    	"Test::More" => 0,
+    $testrequireskey => {
+        "Test::SharedFork" => 0,
+        "Test::SharedFork::Scalar" => 0,
+        "Test::More" => 0,
     },
     CCFLAGS => "-Wall -Wextra -Wdeclaration-after-statement -Wno-comment",
     dynamic_lib => {
@@ -22,17 +29,4 @@ WriteMakefile(
         # Patches welcome.
         OTHERLDFLAGS => "-nostartfiles"
     },
-    # CONFIGURE => sub {
-    # 	require Devel::PPPort;
-    # 	Devel::PPPort::WriteFile("ppport.h");
-    # 	return {};
-    # },
-    # clean => {FILES => "ppport.h"},
-    # DEFINE => "-DUSE_PPPORT",
-    # CONFIGURE_REQUIRES => {
-    # 	"Devel::PPPort" => 0,
-    # 	},
-    # BUILD_REQUIRES => {
-    # 	"Devel::PPPort" => 0,
-    # },
 );
