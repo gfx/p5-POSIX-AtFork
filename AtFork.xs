@@ -2,200 +2,65 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-
-#include "ppport.h"
-
 #include <pthread.h>
+#include <errno.h>
 
-#define MY_CXT_KEY "POSIX::AtFork::_guts" XS_VERSION
-typedef struct {
-    AV* prepare_list;
-    AV* parent_list;
-    AV* child_list;
-} my_cxt_t;
-START_MY_CXT
+// Without this, callbacks that try to die/exit the interpreter
+// hang on a futex lock on some Linuxes.
+// This is likely due to quirks in certain glibc/GCC
+// toolchains' implementations of __register_atfork. Alternatively,
+// it might be due to conflicting libc versions used by pthread versus
+// this library? Or something else? Some users that have encountered
+// this issue suggest working around it using an "extern". This breaks
+// (generates a bad binary that SIGBUSes) on non-glibc/non-GCC environments.
+// Instead, this existing definition appears to hint at a reference count
+// or similar that gets the right value into the __dso_handle reference
+// wrangled by __register_atfork and the fork(2) implementation.
+// Related reading:
+// - https://github.com/genodelabs/genode/issues/437
+// - https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=223110
+// - https://bugs.launchpad.net/ubuntu/+source/perl/+bug/24406
+// - http://stackoverflow.com/questions/28003587
+void *__dso_handle __attribute__((__visibility__("hidden"))) __attribute__((weak)) = &__dso_handle;
 
-static void
-paf_call_list(pTHX_ AV* const av) {
-    const char* const opname = PL_op ? OP_NAME(PL_op) : "(unknown)";
-    SV* opnamesv;
-    I32 const len = av_len(av) + 1;
-    I32 i;
+static char* cbargs[3] = {NULL, NULL, NULL};
 
-    ENTER;
-    SAVETMPS;
-    opnamesv = sv_2mortal(newSVpv(opname, 0));
-    for(i = 0; i < len; i++) {
-        dSP;
-        PUSHMARK(SP);
-        XPUSHs(opnamesv);
-        PUTBACK;
-        call_sv(*av_fetch(av, i, TRUE), G_VOID | G_EVAL);
-        if(SvTRUEx(ERRSV)) {
-            warn("Callback for pthread_atfork() died (ignored): %"SVf,
-                ERRSV);
-        }
-    }
-    FREETMPS;
-    LEAVE;
-}
-
-static void
-paf_prepare(void) {
+static void paf_run_callbacks (char* type) {
+    cbargs[1] = type;
     dTHX;
-    dMY_CXT;
-    paf_call_list(aTHX_ MY_CXT.prepare_list);
-}
-
-static void
-paf_parent(void) {
-    dTHX;
-    dMY_CXT;
-    paf_call_list(aTHX_ MY_CXT.parent_list);
-}
-
-static void
-paf_child(void) {
-    dTHX;
-    dMY_CXT;
-    SV* pidsv;
-
-    /* fix up pid */
-    pidsv = get_sv("$", GV_ADD);
-    SvREADONLY_off(pidsv);
-    sv_setiv(pidsv, (IV)PerlProc_getpid());
-    SvREADONLY_on(pidsv);
-
-    paf_call_list(aTHX_ MY_CXT.child_list);
-}
-
-static void
-paf_register_cb(pTHX_ AV* const list, SV* const cb) {
-    SvGETMAGIC(cb);
-    if(SvOK(cb)) {
-        if(SvROK(cb) && SvTYPE(SvRV(cb)) == SVt_PVCV) {
-            av_push(list, newSVsv(cb));
-        }
-        else {
-            croak("Callback for atfork must be a CODE reference");
+    if ( strcmp(type, "child") == 0 ) {
+        IV pid;
+        SV* pidsv;
+        pid = PerlProc_getpid();    
+        pidsv = get_sv("$", GV_ADD);
+        
+        if (pid != sv_2iv_flags(pidsv, SV_GMAGIC)) {
+            SvREADONLY_off(pidsv);
+            sv_setiv(pidsv, (IV)pid);
+            SvREADONLY_on(pidsv);
         }
     }
+
+    // The cast is safe: call_argv accepts a char**, and iterates through the
+    // array by incrementing the outer pointer, but the inner char* is just
+    // supplied to newSV* functions that copy it rather than mutating.
+    cbargs[0] = PL_op ? (char*)OP_NAME(PL_op) : "(unknown)";
+    call_argv("POSIX::AtFork::_run_callbacks", G_VOID | G_KEEPERR | G_DISCARD, cbargs);
 }
 
-static void
-paf_delete(pTHX_ AV* const av, SV* const cb) {
-    I32 len = av_len(av) + 1;
-    I32 i;
-
-    if(!(SvROK(cb) && SvTYPE(SvRV(cb)) == SVt_PVCV)) {
-        croak("Not a CODE reference to delete callbacks");
-    }
-
-    for(i = 0; i < len; i++) {
-        SV* const sv = *av_fetch(av, i, TRUE);
-        if(!SvROK(sv)){ sv_dump(sv); }
-        assert(SvROK(sv));
-
-        if(SvRV(sv) == SvRV(cb)) {
-            size_t const tail = len - i - 1;
-            Move(AvARRAY(av) + i + 1, AvARRAY(av) + i, tail, SV*);
-            AvFILLp(av)--;
-            len--;
-            SvREFCNT_dec(sv);
-        }
-    }
+static void paf_child() {
+    paf_run_callbacks("child");
 }
 
-static void
-paf_initialize(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
-    pthread_atfork(paf_prepare, paf_parent, paf_child);
-
-    MY_CXT.prepare_list = newAV();
-    MY_CXT.parent_list  = newAV();
-    MY_CXT.child_list   = newAV();
+static void paf_parent() {
+    paf_run_callbacks("parent");
 }
 
-MODULE = POSIX::AtFork		PACKAGE = POSIX::AtFork		
+static void paf_prepare() {
+    paf_run_callbacks("prepare");
+}
 
+MODULE = POSIX::AtFork    PACKAGE = POSIX::AtFork    PREFIX = posix_atfork_
 PROTOTYPES: DISABLE
-
 BOOT:
-{
-    MY_CXT_INIT;
-    paf_initialize(aTHX_ aMY_CXT_ FALSE);
-}
-
-#ifdef USE_ITHREADS
-
-void
-CLONE(...)
-CODE:
-{
-    MY_CXT_CLONE;
-    paf_initialize(aTHX_ aMY_CXT_ TRUE);
-    PERL_UNUSED_VAR(items);
-}
-
-#endif
-
-void
-pthread_atfork(SV* prepare, SV* parent, SV* child)
-CODE:
-{
-   dMY_CXT;
-   paf_register_cb(aTHX_ MY_CXT.prepare_list, prepare);
-   paf_register_cb(aTHX_ MY_CXT.parent_list,  parent);
-   paf_register_cb(aTHX_ MY_CXT.child_list,   child);
-}
-
-
-void
-add_to_prepare(klass, SV* cb)
-CODE:
-{
-   dMY_CXT;
-   paf_register_cb(aTHX_ MY_CXT.prepare_list, cb);
-}
-
-
-void
-add_to_parent(klass, SV* cb)
-CODE:
-{
-   dMY_CXT;
-   paf_register_cb(aTHX_ MY_CXT.parent_list, cb);
-}
-
-
-void
-add_to_child(klass, SV* cb)
-CODE:
-{
-   dMY_CXT;
-   paf_register_cb(aTHX_ MY_CXT.child_list, cb);
-}
-
-void
-delete_from_prepare(klass, SV* cb)
-CODE:
-{
-    dMY_CXT;
-    paf_delete(aTHX_ MY_CXT.prepare_list, cb);
-}
-
-void
-delete_from_parent(klass, SV* cb)
-CODE:
-{
-    dMY_CXT;
-    paf_delete(aTHX_ MY_CXT.parent_list, cb);
-}
-
-void
-delete_from_child(klass, SV* cb)
-CODE:
-{
-    dMY_CXT;
-    paf_delete(aTHX_ MY_CXT.child_list, cb);
-}
-
+pthread_atfork(paf_prepare, paf_parent, paf_child);
