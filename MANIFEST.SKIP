@@ -1,5 +1,7 @@
 AtFork\.(?:c|o|bs)$
 .git\b
+\.shipit
+\.gitignore
 \bblib\b
 \.bak$
 \.old$
@@ -8,5 +10,7 @@ AtFork\.(?:c|o|bs)$
 Makefile$
 pm_to_blib$
 ppport\.h$
-MYMETA.yml
+MYMETA.*
+\.tar\.gz
+MANIFEST.SKIP
 
