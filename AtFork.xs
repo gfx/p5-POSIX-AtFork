@@ -25,7 +25,7 @@ typedef struct {
 } stack_backup_t;
 
 static void
-paf_save_stacks(pTHX, stack_backup_t* bk) {
+paf_save_stacks(pTHX_ stack_backup_t* bk) {
     bk->curstackinfo = PL_curstackinfo;
     bk->curstack = PL_curstack;
     bk->mainstack = PL_mainstack;
@@ -36,7 +36,7 @@ paf_save_stacks(pTHX, stack_backup_t* bk) {
 }
 
 static void
-paf_restore_stacks(pTHX, stack_backup_t* bk) {
+paf_restore_stacks(pTHX_ stack_backup_t* bk) {
     PL_curstackinfo = bk->curstackinfo;
     PL_curstack = bk->curstack;
     PL_mainstack = bk->mainstack;
@@ -83,7 +83,7 @@ paf_call_list(pTHX_ AV* const av) {
     I32 i;
 
     stack_backup_t bk;
-    paf_save_stacks(aTHX, &bk);
+    paf_save_stacks(aTHX_ &bk);
     paf_init_stacks(aTHX);
     ENTER;
     SAVETMPS;
@@ -102,7 +102,7 @@ paf_call_list(pTHX_ AV* const av) {
     FREETMPS;
     LEAVE;
     paf_destruct_stacks(aTHX);
-    paf_restore_stacks(aTHX, &bk);
+    paf_restore_stacks(aTHX_ &bk);
 }
 
 static void

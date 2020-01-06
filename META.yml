@@ -29,7 +29,7 @@ requires:
   perl: 5.8.1
 resources:
   license: http://dev.perl.org/licenses/
-version: '0.03'
+version: '0.04'
 x_contributors:
   - 'Alexey Mashanov <amashanov@corp.mail.ru>'
   - 'Nikolay Shulyakovskiy (nikolas) <shulyakovskiy@corp.mail.ru>'
